@@ -80,3 +80,36 @@ jobs:
         with:
           files: |
             output/bzip3-${{ matrix.target[0] }}*
+
+  release-cosmo:
+    name: Publish bzip3 built with Cosmopolitan Libc
+    needs: [ ghrelease ]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download source package artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: bzip3-${{ github.ref_name }}
+      - name: Extract source package
+        run: tar --strip-components=1 -xf bzip3-${{ github.ref_name }}.tar.gz
+      - name: Install cosmocc
+        run: |
+          sudo mkdir -p /sc
+          sudo chmod 0777 -R /sc
+          cd /sc
+          wget https://github.com/jart/cosmopolitan/releases/download/3.3.3/cosmocc-3.3.3.zip
+          mkdir cosmo
+          cd cosmo
+          unzip ../cosmocc-3.3.3.zip
+          sudo cp ./bin/ape-x86_64.elf /usr/bin/ape
+          sudo sh -c "echo ':APE:M::MZqFpD::/usr/bin/ape:' >/proc/sys/fs/binfmt_misc/register"
+      - name: Build APE binary of bzip3
+        run: |
+          CC="/sc/cosmo/bin/cosmocc" AR="/sc/cosmo/bin/cosmoar" ./configure --bindir=/ --program-suffix=.com --enable-static-exe --disable-arch-native
+          make
+          make DESTDIR=$(pwd)/output install-exec
+      - name: Publish APE binary
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            output/bzip3.com
