@@ -83,17 +83,13 @@ jobs:
 
   release-cosmo:
     name: Publish bzip3 built with Cosmopolitan Libc
-    needs: [ ghrelease ]
     runs-on: ubuntu-latest
     steps:
-      - name: Download source package artifact
-        uses: actions/download-artifact@v3
-        with:
-          name: bzip3-${{ github.ref_name }}
-      - name: Extract source package
-        run: tar --strip-components=1 -xf bzip3-${{ github.ref_name }}.tar.gz
+      - name: Checkout the repository
+        uses: actions/checkout@master
       - name: Install cosmocc
         run: |
+          sudo apt-get install -y automake autoconf
           sudo mkdir -p /sc
           sudo chmod 0777 -R /sc
           cd /sc
