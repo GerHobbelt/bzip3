@@ -101,6 +101,7 @@ jobs:
           sudo sh -c "echo ':APE:M::MZqFpD::/usr/bin/ape:' >/proc/sys/fs/binfmt_misc/register"
       - name: Build APE binary of bzip3
         run: |
+          autoreconf -fi
           CC="/sc/cosmo/bin/cosmocc" AR="/sc/cosmo/bin/cosmoar" ./configure --bindir=/ --program-suffix=.com --enable-static-exe --disable-arch-native
           make
           make DESTDIR=$(pwd)/output install-exec
