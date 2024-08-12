@@ -25,7 +25,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#if !defined(_WIN32)
 #include <unistd.h>
+#else
+#include <windows.h>
+#endif
 
 #ifdef HAVE_GETOPT_LONG
     #include <getopt.h>
@@ -33,7 +37,7 @@
     #include "getopt-shim.h"
 #endif
 
-#if defined __MSVCRT__
+#if defined(__MSVCRT__) || defined(_MSC_VER)
     #include <fcntl.h>
     #include <io.h>
 #endif

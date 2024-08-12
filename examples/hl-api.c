@@ -26,7 +26,7 @@ int main(void) {
         return 1;
     }
 
-    printf("%d => %d\n", size, out_size);
+    printf("%zu => %zu\n", size, out_size);
 
     // Decompress the file.
     bzerr = bz3_decompress(outbuf, buffer, out_size, &size);
@@ -35,7 +35,7 @@ int main(void) {
         return 1;
     }
 
-    printf("%d => %d\n", out_size, size);
+    printf("%zu => %zu\n", out_size, size);
 
     free(buffer);
     free(outbuf);
