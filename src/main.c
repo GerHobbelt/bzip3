@@ -50,6 +50,10 @@
 #define MODE_TEST 2
 #define MODE_RECOVER 3
 
+#ifndef VERSION
+#define VERSION "1.4.1"
+#endif
+
 static void version() {
     fprintf(stdout, "bzip3 " VERSION
                     "\n"
@@ -485,6 +489,14 @@ static int process(FILE * input_des, FILE * output_des, int mode, int block_size
 
     return 0;
 }
+
+#ifndef F_OK
+#define F_OK 0
+#endif
+
+#ifndef S_ISDIR
+#define S_ISDIR(mode) (((mode) & S_IFMT) == S_IFDIR)
+#endif
 
 static int is_dir(const char * path) {
     struct stat sb;

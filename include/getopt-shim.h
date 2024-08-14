@@ -142,7 +142,7 @@ static int __getopt_long_core(int argc, char * const * argv, const char * optstr
         ((longonly && argv[optind][1] && argv[optind][1] != '-') || (argv[optind][1] == '-' && argv[optind][2]))) {
         int colon = optstring[optstring[0] == '+' || optstring[0] == '-'] == ':';
         int i, cnt, match;
-        char * opt;
+        char * opt = NULL;
         for (cnt = i = 0; longopts[i].name; i++) {
             const char * name = longopts[i].name;
             opt = argv[optind] + 1;

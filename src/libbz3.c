@@ -469,6 +469,10 @@ struct bz3_state {
 
 BZIP3_API s8 bz3_last_error(struct bz3_state * state) { return state->last_error; }
 
+#ifndef VERSION
+#define VERSION "1.4.1"
+#endif
+
 BZIP3_API const char * bz3_version(void) { return VERSION; }
 
 BZIP3_API size_t bz3_bound(size_t input_size) { return input_size + input_size / 50 + 32; }
