@@ -237,7 +237,8 @@ static int process(FILE * input_des, FILE * output_des, int mode, int block_size
             return 1;
         }
 
-        u8 * buffer = malloc(bz3_bound(block_size));
+        size_t buffer_size = bz3_bound(block_size);
+        u8 * buffer = malloc(buffer_size);
 
         if (!buffer) {
             fprintf(stderr, "Failed to allocate memory.\n");
@@ -280,7 +281,7 @@ static int process(FILE * input_des, FILE * output_des, int mode, int block_size
                 }
                 xread_noeof(buffer, 1, new_size, input_des);
                 bytes_read += 8 + new_size;
-                if (bz3_decode_block(state, buffer, new_size, old_size) == -1) {
+                if (bz3_decode_block(state, buffer, buffer_size, new_size, old_size) == -1) {
                     fprintf(stderr, "Failed to decode a block: %s\n", bz3_strerror(state));
                     return 1;
                 }
@@ -302,7 +303,7 @@ static int process(FILE * input_des, FILE * output_des, int mode, int block_size
                 }
                 xread_noeof(buffer, 1, new_size, input_des);
                 bytes_read += 8 + new_size;
-                if (bz3_decode_block(state, buffer, new_size, old_size) == -1) {
+                if (bz3_decode_block(state, buffer, buffer_size, new_size, old_size) == -1) {
                     fprintf(stderr, "Writing invalid block: %s\n", bz3_strerror(state));
                 }
                 xwrite(buffer, old_size, 1, output_des);
@@ -323,7 +324,7 @@ static int process(FILE * input_des, FILE * output_des, int mode, int block_size
                 xread_noeof(buffer, 1, new_size, input_des);
                 bytes_read += 8 + new_size;
                 bytes_written += old_size;
-                if (bz3_decode_block(state, buffer, new_size, old_size) == -1) {
+                if (bz3_decode_block(state, buffer, buffer_size, new_size, old_size) == -1) {
                     fprintf(stderr, "Failed to decode a block: %s\n", bz3_strerror(state));
                     return 1;
                 }
@@ -343,6 +344,7 @@ static int process(FILE * input_des, FILE * output_des, int mode, int block_size
         struct bz3_state * states[workers];
         u8 * buffers[workers];
         s32 sizes[workers];
+        size_t buffer_sizes[workers];
         s32 old_sizes[workers];
         for (s32 i = 0; i < workers; i++) {
             states[i] = bz3_new(block_size);
@@ -350,7 +352,9 @@ static int process(FILE * input_des, FILE * output_des, int mode, int block_size
                 fprintf(stderr, "Failed to create a block encoder state.\n");
                 return 1;
             }
-            buffers[i] = malloc(block_size + block_size / 50 + 32);
+            size_t buffer_size = bz3_bound(block_size);
+            buffer_sizes[i] = buffer_size;
+            buffers[i] = malloc(buffer_size);
             if (!buffers[i]) {
                 fprintf(stderr, "Failed to allocate memory.\n");
                 return 1;
@@ -401,7 +405,7 @@ static int process(FILE * input_des, FILE * output_des, int mode, int block_size
                     xread_noeof(buffers[i], 1, sizes[i], input_des);
                     bytes_read += 8 + sizes[i];
                 }
-                bz3_decode_blocks(states, buffers, sizes, old_sizes, i);
+                bz3_decode_blocks(states, buffers, buffer_sizes, sizes, old_sizes, i);
                 for (s32 j = 0; j < i; j++) {
                     if (bz3_last_error(states[j]) != BZ3_OK) {
                         fprintf(stderr, "Failed to decode data: %s\n", bz3_strerror(states[j]));
@@ -429,7 +433,7 @@ static int process(FILE * input_des, FILE * output_des, int mode, int block_size
                     xread_noeof(buffers[i], 1, sizes[i], input_des);
                     bytes_read += 8 + sizes[i];
                 }
-                bz3_decode_blocks(states, buffers, sizes, old_sizes, i);
+                bz3_decode_blocks(states, buffers, buffer_sizes, sizes, old_sizes, i);
                 for (s32 j = 0; j < i; j++) {
                     if (bz3_last_error(states[j]) != BZ3_OK) {
                         fprintf(stderr, "Writing invalid block: %s\n", bz3_strerror(states[j]));
@@ -457,7 +461,7 @@ static int process(FILE * input_des, FILE * output_des, int mode, int block_size
                     bytes_read += 8 + sizes[i];
                     bytes_written += old_sizes[i];
                 }
-                bz3_decode_blocks(states, buffers, sizes, old_sizes, i);
+                bz3_decode_blocks(states, buffers, buffer_sizes, sizes, old_sizes, i);
                 for (s32 j = 0; j < i; j++) {
                     if (bz3_last_error(states[j]) != BZ3_OK) {
                         fprintf(stderr, "Failed to decode data: %s\n", bz3_strerror(states[j]));
@@ -815,8 +819,8 @@ int main(int argc, char * argv[]) {
 
     FILE *input_des = NULL, *output_des = NULL;
 
-    output_des = mode != MODE_TEST ? open_output(output, force) : NULL;
     input_des = open_input(input);
+    output_des = mode != MODE_TEST ? open_output(output, force) : NULL;
 
     if (output != f2) free(output);
 
